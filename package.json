@@ -1,0 +1,33 @@
+{
+  "name": "kvalidatemodel",
+  "version": "1.0.0",
+  "description": "check JSON object is validate",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/killa123/KValidateModel.git"
+  },
+  "keywords": [
+    "JSON",
+    "validate"
+  ],
+  "author": "killa",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/killa123/KValidateModel/issues"
+  },
+  "homepage": "https://github.com/killa123/KValidateModel#readme",
+  "dependencies": {
+    "debug": "^2.5.2"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "should": "^11.1.2"
+  }
+}
