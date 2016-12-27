@@ -257,81 +257,81 @@ describe('test validate model', function() {
 
   });
 
-  describe('test nest schema', function() {
-    class TestModel extends KValidateModel {
-      get schema() {
-        return [{
-          a: {
-            type: 'number',
-            required: true,
-            code: 1
-          },
-          b: {
-            type: 'string',
-            required: true,
-            code: 2
-          },
-          e: {
-            f: {
-              type: 'number',
-              required: true,
-              code: 3
-            }
-          }
-        }]
-      }
-    }
+  // describe('test nest schema', function() {
+  //   class TestModel extends KValidateModel {
+  //     get schema() {
+  //       return [{
+  //         a: {
+  //           type: 'number',
+  //           required: true,
+  //           code: 1
+  //         },
+  //         b: {
+  //           type: 'string',
+  //           required: true,
+  //           code: 2
+  //         },
+  //         e: {
+  //           f: {
+  //             type: 'number',
+  //             required: true,
+  //             code: 3
+  //           }
+  //         }
+  //       }]
+  //     }
+  //   }
 
-    it('should validate', function(done) {
-      var test = new TestModel([{
-        a: 1,
-        b: 'test',
-        c: 2,
-        d: 'test2',
-        e: {
-          f: 3
-        }
-      }, {
-        a: 2,
-        b: 'test2',
-        e: {
-          f: 4
-        }
-      }]);
-      test[0].a.should.equal(1);
-      test[0].b.should.equal('test');
-      test[0].e.f.should.equal(3);
-      test[1].a.should.equal(2);
-      test[1].b.should.equal('test2');
-      test[1].e.f.should.equal(4);
-      should.not.exists(test.e);
-      done();
-    });
+  //   it('should validate', function(done) {
+  //     var test = new TestModel([{
+  //       a: 1,
+  //       b: 'test',
+  //       c: 2,
+  //       d: 'test2',
+  //       e: {
+  //         f: 3
+  //       }
+  //     }, {
+  //       a: 2,
+  //       b: 'test2',
+  //       e: {
+  //         f: 4
+  //       }
+  //     }]);
+  //     test[0].a.should.equal(1);
+  //     test[0].b.should.equal('test');
+  //     test[0].e.f.should.equal(3);
+  //     test[1].a.should.equal(2);
+  //     test[1].b.should.equal('test2');
+  //     test[1].e.f.should.equal(4);
+  //     should.not.exists(test.e);
+  //     done();
+  //   });
 
-    it('should error when nest obj is wrong', function(done) {
-      var error;
-      try {
-        var test = new TestModel([{
-          a: 1,
-          b: 'test',
-          c: 2,
-          d: 'test2',
-          e: 4
-        }, {
-          a: 2,
-          b: 'test2',
-          e: {
-            f: 4
-          }
-        }]);
-      } catch (e) {
-        error = e;
-      }
-      should.exists(error);
-      error.code.should.equal(3);
-      done();
-    });
-  })
+  //   it('should error when nest obj is wrong', function(done) {
+  //     var error;
+  //     try {
+  //       var test = new TestModel([{
+  //         a: 1,
+  //         b: 'test',
+  //         c: 2,
+  //         d: 'test2',
+  //         e: 4
+  //       }, {
+  //         a: 2,
+  //         b: 'test2',
+  //         e: {
+  //           f: 4
+  //         }
+  //       }]);
+  //     } catch (e) {
+  //       error = e;
+  //     }
+  //     should.exists(error);
+  //     error.code.should.equal(3);
+  //     done();
+  //   });
+  // })
 
   describe('test nest array schema', function() {
     class TestModel extends KValidateModel {

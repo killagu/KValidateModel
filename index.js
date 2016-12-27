@@ -4,14 +4,12 @@
 
 'use strict';
 
-var debug = require('debug')('KValidateModel');
+const debug = require('debug')('KValidateModel');
 
 class KValidateModel {
   constructor(data) {
     if (Array.isArray(this.schema)) {
-      debug(
-        'you are using Array Schema,it will return Array not KValidateModel instance'
-      );
+      debug('you are using Array Schema,it will return Array not KValidateModel instance');
       return this.validateModel(data, this.schema);
     }
     this.validatePath(data, this.path, this.schema);
@@ -20,162 +18,103 @@ class KValidateModel {
 
   validateData(data, schema, key) {
     key = key || '';
-    var error;
+    let error;
     if (schema.required === true && typeof data === 'undefined') {
       error = new Error(key + ' is required ');
-      if (schema.code) {
-        error.code = schema.code;
-      }
+      error.code = schema.code;
       throw error;
     }
-    if (typeof data === 'undefined') {
-      return undefined;
-    }
-    if (data === null) {
-      return null;
-    }
+    if (typeof data === 'undefined' || data === null) return data;
     if (schema.type === 'date') {
-      if (!data) {
-        return undefined;
-      }
-      try {
-        if (data.indexOf('T') > 0) {
-          let [date, time] = data.split('T');
-          let hour = time.split(':').shift();
-          if (hour.length == 1) {
-            hour = '0' + hour;
-            time = hour + time.substr(1);
-            data = `${date}T${time}`;
-          }
-        }
-      } catch (e) {
-        error = new TypeError(key + ' expected date actual is ' + data);
-        if (schema.code) {
-          error.code = schema.code;
-        }
-        throw error;
-      }
-      var timestamp = Date.parse(data);
+      const timestamp = Date.parse(data);
       if (isNaN(timestamp)) {
         error = new TypeError(key + ' expected date actual is ' + data);
-        if (schema.code) {
-          error.code = schema.code;
-        }
+        error.code = schema.code;
         throw error;
       }
       data = new Date(data);
     } else if (typeof data != schema.type) {
-      error = new TypeError(key + ' expected ' + schema.type + ' actual is ' +
-        typeof data);
-      if (schema.code) {
-        error.code = schema.code;
-      }
+      error = new TypeError(key + ' expected ' + schema.type + ' actual is ' + typeof data);
+      error.code = schema.code;
       throw error;
     }
     return data;
   }
 
   validateModel(data, schema) {
-    debug(data);
-    if (data == null) {
-      return null;
-    }
-    if (Array.isArray(schema)) {
-      return this.validateArray(data, schema)
-    } else if (typeof schema === 'object') {
-      var keys = Object.keys(schema);
-      if (keys.length === 1 && keys[0] === 'type') {
-        return this.validateData(data, schema);
-      }
-      keys.forEach(key => {
-        debug(key);
-        var tempSchema = schema[key];
-        debug(tempSchema);
-        if (typeof tempSchema === 'string') {
-          this.validateData(data[key], tempSchema, key);
-        } else if (tempSchema.type) {
-          if (typeof tempSchema.type === 'string') {
-            debug('type is string');
-            this[key] = this.validateData(data[key], tempSchema, key);
-          } else if (typeof tempSchema.type === 'function') {
-            debug('type is function');
-            if (data[key]) {
-              this[key] = new tempSchema.type(data[key]);
-            }
-          }
-        } else if (Array.isArray(tempSchema)) {
-          debug('type is array');
-          if (data[key]) {
-            this[key] = this.validateArray(data[key], tempSchema);
-          }
-        } else if (typeof tempSchema === 'object') {
-          debug('type is object');
-          if (data[key]) {
-            class TempSchema extends KValidateModel {
-              get schema() {
-                return tempSchema
-              }
-            }
-            this[key] = new TempSchema(data[key]);
-          }
-        } else if (typeof tempSchema === 'function') {
-          debug('type if class');
-          this[key] = new tempSchema(data[key]); //validateModel(data, tempSchema);
-        } else {
-          throw new TypeError(key + ' ' + tempSchema +
-            ' is not supported');
-        }
-      });
-      return this;
-    } else {
+    if (data == null) return null;
+
+    if (Array.isArray(schema)) return this.validateArray(data, schema);
+
+    if (typeof schema !== 'object') {
       throw new TypeError(schema + ' is not supported');
     }
+    const keys = Object.keys(schema);
+    if (this.isSchema(keys)) return this.validateData(data, schema);
+    keys.forEach(key => this.processKey(key,data[key], schema[key]));
+    return this;
+  }
+
+  processKey(key, data, schema) {
+    if (typeof schema === 'string') {
+      this.validateData(data, schema, key);
+    } else if (schema.type) {
+      if (typeof schema.type === 'string') {
+        this[key] = this.validateData(data, schema, key);
+      } else if (typeof schema.type === 'function') {
+        this[key] = data ? new schema.type(data) : void 0;
+      }
+    } else if (Array.isArray(schema)) {
+      this[key] = data ? this.validateArray(data, schema) : void 0;
+    } else if (typeof schema === 'function') {
+      this[key] = data ? new schema(data) : void 0;
+    } else {
+      throw new TypeError(key + ' ' + schema + ' is not supported');
+    }
+  }
+
+  isSchema(keys, schema) {
+    if (keys.length === 1 && keys[0] === 'type') return true;
+    if (keys.length === 2) {
+      if (
+        keys[0] === 'type' && keys[1] === 'required' ||
+        keys[1] === 'type' && keys[0] === 'required') return true;
+    }
+    return false;
   }
 
   validatePath(data, path, schema) {
     path = path || {};
     schema = schema || {};
-    var keys = Object.keys(path);
+    const keys = Object.keys(path);
     keys.forEach(function(key) {
-      if (!(path[key](data[key]))) {
-        var error = new Error(key + ' is invalidate');
-        if (schema[key].code) {
-          error.code = schema[key].code;
-        }
-        throw error;
-      }
+      if ((path[key](data[key]))) return;
+      const error = new Error(key + ' is invalidate');
+      error.code = schema[key].code;
+      throw error;
     });
   }
 
   validateArray(obj, schema) {
-    var error;
+    let error;
     schema = schema[0];
     if (!Array.isArray(obj)) {
       error = new Error(obj + ' is not array');
       throw error;
     }
     if (typeof schema === 'function') {
-      return obj.map(temp => {
-        return new schema(temp);
-      });
+      return obj.map(temp => new schema(temp));
     } else {
       const keys = Object.keys(schema);
-      if (
-        (keys.length === 1 && keys[0] === 'type') ||
-        (keys.length === 2 && typeof schema['code'] == 'number')
-      ) {
-        return obj.map(temp => {
-          return this.validateData(temp, schema);
-        });
+      if (this.isSchema(keys)) {
+        return obj.map(temp => this.validateData(temp, schema));
       } else {
         let tempClass = class extends KValidateModel {
           get schema() {
             return schema;
           }
         };
-        return obj.map(temp => {
-          return new tempClass(temp);
-        });
+        return obj.map(temp => new tempClass(temp));
       }
     }
   }
